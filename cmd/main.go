@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net"
 
 	"github.com/ZiadMostafaGit/rental-app/internal/config"
 	_ "github.com/go-sql-driver/mysql"

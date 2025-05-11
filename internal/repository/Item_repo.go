@@ -22,8 +22,76 @@ func New_item_images_repo(db *sql.DB) *Item_images_repo {
 	return &Item_images_repo{DB: db}
 }
 
+func (i *Item_repo) Get_items_by_category(ctx context.Context, categoryID uint) ([]*models.Item, error) {
+	query := `
+		SELECT it.id, it.owner_id, it.title, it.description, it.price, it.status
+		FROM items it
+		INNER JOIN item_categories ic ON it.id = ic.item_id
+		WHERE ic.category_id = ?
+	`
+
+	rows, err := i.DB.QueryContext(ctx, query, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []*models.Item{}
+
+	for rows.Next() {
+		item := &models.Item{}
+		if err := rows.Scan(
+			&item.Id,
+			&item.Owner_id,
+			&item.Title,
+			&item.Description,
+			&item.Price,
+			&item.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no items found for category ID %d", categoryID)
+	}
+
+	return items, nil
+}
+
 func (z *Item_images_repo) Get_item_images(ctx context.Context, id uint) ([]*models.Item_image, error) {
 	query := `SELECT item_id, image_url FROM item_images WHERE item_id=?`
+
+	res, err := z.DB.QueryContext(ctx, query, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Close()
+	images := []*models.Item_image{}
+
+	for res.Next() {
+		image := &models.Item_image{}
+		if err := res.Scan(&image.Item_id, &image.Item_image); err != nil {
+			return nil, err
+		}
+		images = append(images, image)
+	}
+	if len(images) == 0 {
+		return nil, fmt.Errorf("no images found for this id %d", id)
+	}
+	return images, nil
+
+}
+
+func (z *Item_images_repo) Get_all_item_images(ctx context.Context, id uint) ([]*models.Item_image, error) {
+	query := `SELECT item_id, image_url FROM item_images `
 
 	res, err := z.DB.QueryContext(ctx, query, id)
 
@@ -103,6 +171,43 @@ func (i *Item_repo) Get_item(ctx context.Context, id uint) (*models.Item, error)
 		return nil, err
 	}
 	return item, nil
+}
+
+func (i *Item_repo) Get_all_items(ctx context.Context) ([]*models.Item, error) {
+	query := `SELECT id, owner_id, title, description, price, status FROM items`
+
+	rows, err := i.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []*models.Item{}
+
+	for rows.Next() {
+		item := &models.Item{}
+		if err := rows.Scan(
+			&item.Id,
+			&item.Owner_id,
+			&item.Title,
+			&item.Description,
+			&item.Price,
+			&item.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return nil, fmt.Errorf("no items found")
+	}
+
+	return items, nil
 }
 
 func (i *Item_repo) Insert_item(ctx context.Context, item *models.Item) error {

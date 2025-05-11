@@ -18,6 +18,48 @@ func New_user_repo(db *sql.DB) *User_repo {
 	}
 }
 
+func (r *User_repo) Get_users(ctx context.Context) ([]*models.User, error) {
+	query := `SELECT id, first_name, last_name, role, gender, state, city, street, score, email
+	          FROM users`
+
+	rows, err := r.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []*models.User
+
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(
+			&user.Id,
+			&user.First_name,
+			&user.Last_name,
+			&user.Role,
+			&user.Gender,
+			&user.State,
+			&user.City,
+			&user.Street,
+			&user.Score,
+			&user.Email,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
+	if len(users) == 0 {
+		return nil, fmt.Errorf("no users found")
+	}
+
+	return users, nil
+}
+
 func (r *User_repo) Get_by_id(ctx context.Context, id uint) (*models.User, error) {
 	query := `SELECT id, first_name, last_name, role, gender, state, city, street, score, email 
 	          FROM users WHERE id = ?`
@@ -65,6 +107,23 @@ func (r *User_repo) Insert_user(ctx context.Context, user *models.User) error {
 // DELETE user by ID
 func (r *User_repo) Delete_user(ctx context.Context, id uint) error {
 	query := `DELETE FROM users WHERE id = ?`
+	result, err := r.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no user found with id %d", id)
+	}
+	return nil
+}
+
+// DELETE all users
+func (r *User_repo) Delete_all_users(ctx context.Context, id uint) error {
+	query := `DELETE FROM users `
 	result, err := r.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err

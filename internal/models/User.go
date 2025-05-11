@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type User struct {
 	Id         uint
 	First_name string

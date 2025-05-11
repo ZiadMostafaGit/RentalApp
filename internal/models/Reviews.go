@@ -1,9 +1,12 @@
 package models
 
-type Reviews struct {
-	Id      uint
-	Item_id uint
-	User_id uint
-	Comment string
-	Rating  int
+import "time"
+
+type Review struct {
+	ID        uint
+	ItemID    uint
+	UserID    uint
+	Rating    int
+	Comment   string
+	CreatedAt time.Time
 }
