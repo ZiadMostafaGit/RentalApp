@@ -1,40 +1,40 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
-type config struct {
-	app_port    string
-	db_host     string
-	db_port     string
-	db_user     string
-	db_password string
-	db_name     string
+type Config struct { // Exported struct
+	AppPort    string // Exported fields
+	DBHost     string
+	DBPort     string
+	DBUser     string
+	DBPassword string
+	DBName     string
 }
 
-func load_config() *config {
-	err := godotenv.Load()
+func LoadConfig() *Config { // Exported function
+	err := godotenv.Load("/home/ziad/git/rental_app/.env")
 	if err != nil {
-		log.Fatal("error loading the .env file ")
+		log.Fatal("error loading the .env file: ", err)
 	}
-	return &config{
-		app_port:    get_env("APP_PORT", "8080"),
-		db_host:     get_env("DB_HOST", "localhost"),
-		db_port:     get_env("DB_PORT", "3306"),
-		db_password: get_env("DB_PASSWORD", ""),
-		db_user:     get_env("DB_USER", ""),
-		db_name:     get_env("DB_NAME", ""),
+	return &Config{
+		AppPort:    getEnv("APP_PORT", "8080"),
+		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBPort:     getEnv("DB_PORT", "3306"),
+		DBPassword: getEnv("DB_PASSWORD", ""),
+		DBUser:     getEnv("DB_USER", ""),
+		DBName:     getEnv("DB_NAME", ""),
 	}
 }
 
-func get_env(key, default_val string) string {
+func getEnv(key, defaultVal string) string {
 	val := os.Getenv(key)
 	if val == "" {
-		return default_val
-
+		return defaultVal
 	}
 	return val
 }
